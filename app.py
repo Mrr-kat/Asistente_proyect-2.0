@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 load_dotenv("key/key.env")  # Ruta relativa
 
 # Verificar que las variables estén cargadas
-if not os.getenv("CORRE_USU") or not os.getenv("CORREO_CON"):
+if not os.getenv("CORREO_USU") or not os.getenv("CORREO_CON"):
     print("⚠️  Advertencia: Variables de correo no configuradas")
     print("   Usa: CORREO_USU=tu_email@gmail.com")
     print("   Usa: CORREO_CON=contraseña_app_16_caracteres")
