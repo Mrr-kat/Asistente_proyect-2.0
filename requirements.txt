@@ -1,57 +1,56 @@
-# FastAPI y dependencias
-fastapi
-uvicorn[standard]
-python-multipart
+# Core
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+jinja2==3.1.2
 
-# Base de datos
-sqlalchemy
+# Database
+sqlalchemy==2.0.23
 
-# WebSockets y comunicación en tiempo real
-python-socketio
-aiohttp
-websockets
+# WebSockets
+python-socketio==5.10.0
+aiohttp==3.9.1
+websockets==12.0
 
-# Reconocimiento de voz y audio
-speechrecognition
-pyaudio
-pydub
+# Audio processing (Linux compatible)
+SpeechRecognition==3.10.0
+pydub==0.25.1
+PyAudio==0.2.14
 
-# Síntesis de voz
-pyttsx3
-pywin32  # Solo para Windows, opcional para otros sistemas
+# Text-to-speech (Linux compatible)
+pyttsx3==2.90
 
-# Control de navegador y web
-pywhatkit
-pyautogui
-webbrowser
-psutil
+# Web automation
+pywhatkit==5.4
+webbrowser==0.0.1
+psutil==5.9.6
 
-# Búsquedas web y APIs
-wikipedia
-googlesearch-python
-requests
-beautifulsoup4
+# Web scraping
+wikipedia==1.4.0
+googlesearch-python==1.2.3
+requests==2.31.0
+beautifulsoup4==4.12.2
 
-# Manipulación de URLs
-urllib3
+# PDF generation
+reportlab==4.0.4
 
-# Porcupine para detección de palabra clave
-pvporcupine
+# Email
+secure-smtplib==0.1.1
 
-# Generación de PDFs
-reportlab
+# Environment
+python-dotenv==1.0.0
 
-# Envío de correos
-secure-smtplib
+# Security
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
 
-# Variables de entorno (opcional, buena práctica)
-python-dotenv
+# Voice wake-word
+pvporcupine==3.0.2
 
-# Seguridad
-passlib[bcrypt]
-bcrypt
+# Production server
+gunicorn==21.2.0
 
-# Utilidades generales
-pillow
-numpy
-pandas  # Para posibles análisis de datos
+# Utils
+Pillow==10.1.0
+numpy==1.26.2
+urllib3==2.1.0
+python-multipart==0.0.6
