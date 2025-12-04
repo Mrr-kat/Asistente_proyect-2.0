@@ -1,6 +1,6 @@
 import os
-import pvporcupine
-"""import pyaudio"""
+import sys
+import platform
 import struct
 import threading
 import asyncio
@@ -18,40 +18,19 @@ from servicios.historial_service import HistorialService
 from servicios.auth_service import AuthService
 from funciones.comandos import ejecutar_comando
 
-
-
 # ====== CONFIGURACIÓN PARA RENDER ======
-import os
-import sys
-import platform
-
-try:
-    import pyaudio
-except ImportError:
-    pyaudio = None
-    print("PyAudio no disponible - continuando sin audio")
-
-# app.py - MODIFICA EL INICIO
-
-# Desactivar PyAudio en Render
-SKIP_PYAUDIO = os.getenv('SKIP_PYAUDIO', 'true').lower() == 'true'
-
-# IMPORTAR PyAudio solo si NO estamos en Render
-pyaudio = None
-pvporcupine = None
-
-if not SKIP_PYAUDIO:
-    try:
-        import pyaudio
-        import pvporcupine
-        print("PyAudio y Porcupine cargados (modo desarrollo)")
-    except ImportError:
-        print("PyAudio no disponible - modo web solo")
-else:
-    print("Modo Render: PyAudio desactivado")
-
 # Detectar si estamos en Render
 IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true' or 'render' in os.getenv('HOSTNAME', '')
+
+# Variables globales para audio
+pyaudio = None
+pvporcupine = None
+pa = None
+audio_stream = None
+porcupine_engine = None
+
+# IMPORTAR PyAudio solo si NO estamos en Render
+SKIP_PYAUDIO = os.getenv('SKIP_PYAUDIO', 'true').lower() == 'true' or IS_RENDER
 
 def setup_audio_for_render():
     """Configurar audio para entorno Render"""
@@ -77,19 +56,22 @@ def setup_audio_for_render():
         print(f"Error configurando audio: {e}")
         return None
 
-# Inicializar backend de audio
-AUDIO_BACKEND = setup_audio_for_render()
-
 # ====== CONFIGURACIÓN DE PORCUPINE (MODIFICADA) ======
 def setup_porcupine():
     """Configurar Porcupine según backend disponible"""
+    global pyaudio, pvporcupine, pa, audio_stream, porcupine_engine
+    
     try:
         access_key = "jvi0VvjYVgQMIa+C6UMiC7avc6uWoWPP2guR6F6QQyceIU5bT/s7fQ=="
+        
+        # Inicializar backend de audio
+        AUDIO_BACKEND = setup_audio_for_render()
         
         if AUDIO_BACKEND == "sounddevice":
             # Configuración para sounddevice
             import sounddevice as sd
             import numpy as np
+            import pvporcupine
             
             print("Porcupine configurado con sounddevice")
             
@@ -113,43 +95,40 @@ def setup_porcupine():
                     self.stream.stop()
                     self.stream.close()
             
-            porcupine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
+            porcupine_engine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
             audio_stream = SoundDeviceStream(
-                sample_rate=porcupine.sample_rate,
-                frame_length=porcupine.frame_length
+                sample_rate=porcupine_engine.sample_rate,
+                frame_length=porcupine_engine.frame_length
             )
-            return porcupine, audio_stream
+            return porcupine_engine, audio_stream, AUDIO_BACKEND
             
         elif AUDIO_BACKEND == "pyaudio":
             # Configuración original con PyAudio
             import pyaudio
             import pvporcupine
-            import struct
             
-            porcupine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
+            pyaudio = pyaudio
+            porcupine_engine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
             pa = pyaudio.PyAudio()
             audio_stream = pa.open(
-                rate=porcupine.sample_rate,
+                rate=porcupine_engine.sample_rate,
                 channels=1,
                 format=pyaudio.paInt16,
                 input=True,
-                frames_per_buffer=porcupine.frame_length
+                frames_per_buffer=porcupine_engine.frame_length
             )
-            return porcupine, audio_stream
+            return porcupine_engine, audio_stream, AUDIO_BACKEND
             
         else:
             print("⚠️  Backend de audio no disponible. Desactivando reconocimiento por voz.")
-            return None, None
+            return None, None, None
             
     except Exception as e:
         print(f"Error configurando Porcupine: {e}")
-        return None, None
+        return None, None, None
 
 # Inicializar Porcupine
-porcupine, audio_stream = setup_porcupine()
-
-
-
+porcupine, audio_stream, AUDIO_BACKEND = setup_porcupine()
 
 # Configuración de FastAPI
 app = FastAPI()
@@ -359,48 +338,23 @@ async def solicitar_recuperacion(
             "error": f"Error al solicitar recuperación: {str(e)}"
         })
 
+# FUNCIÓN CORREGIDA - SOLO UNA VEZ
 @app.post("/recuperacion/verificar")
 async def verificar_codigo_recuperacion(
     request: Request,
     usuario_correo: str = Form(...),
     codigo: str = Form(...),
+    marcar_como_utilizado: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    """Verificar código de recuperación (NO marcar como usado aún)"""
+    """Verificar código de recuperación"""
     try:
-        # Validar sin marcar como usado
-        usuario_id = AuthService.validar_codigo_recuperacion(db, usuario_correo, codigo, marcar_como_utilizado=False)
-        
-        # Redirigir al paso 3
-        return RedirectResponse(
-            url=f"/recuperacion?usuario={usuario_correo}&codigo={codigo}&step=3",
-            status_code=status.HTTP_303_SEE_OTHER
+        usuario_id = AuthService.validar_codigo_recuperacion(
+            db, 
+            usuario_correo, 
+            codigo, 
+            marcar_como_utilizado=marcar_como_utilizado
         )
-        
-    except ValueError as e:
-        return templates.TemplateResponse("login/recuperacion.html", {
-            "request": request,
-            "error": str(e),
-            "usuario": usuario_correo,
-            "step": 2
-        })
-    except Exception as e:
-        return templates.TemplateResponse("login/recuperacion.html", {
-            "request": request,
-            "error": f"Error al verificar código: {str(e)}",
-            "usuario": usuario_correo,
-            "step": 2
-        })
-
-@app.post("/recuperacion/verificar")
-async def verificar_codigo_recuperacion(
-    request: Request,
-    usuario_correo: str = Form(...),
-    codigo: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    try:
-        usuario_id = AuthService.validar_codigo_recuperacion(db, usuario_correo, codigo)
         
         # Redirigir al paso 3
         return RedirectResponse(
@@ -500,6 +454,9 @@ async def audio(audio: UploadFile, request: Request, db: Session = Depends(get_d
         webm_path = os.path.join("static", "temp", "audio.webm")
         wav_path = os.path.join("static", "temp", "audio.wav")
 
+        # Crear directorio temporal si no existe
+        os.makedirs(os.path.dirname(webm_path), exist_ok=True)
+        
         # Guardar archivo
         with open(webm_path, "wb") as f:
             f.write(await audio.read())
@@ -517,8 +474,12 @@ async def audio(audio: UploadFile, request: Request, db: Session = Depends(get_d
             audio_data = recognizer.record(source)
 
         # Limpiar temporales
-        os.remove(webm_path)
-        os.remove(wav_path)
+        try:
+            os.remove(webm_path)
+            os.remove(wav_path)
+        except:
+            pass
+            
         text = recognizer.recognize_google(audio_data, language="es-ES")
         
         # Ejecutar comando en un thread separado, pero necesitamos crear nueva sesión
@@ -603,25 +564,9 @@ async def generar_reporte_pdf(request: Request, db: Session = Depends(get_db)):
     
     return {"mensaje": "Reporte PDF generado", "archivo": archivo_generado}
 
-
-#///////////////////
-
+# SocketIO app mount
 app_mount = socketio.ASGIApp(sio, app)
-"""
-# Configuración de Porcupine
-access_key = "jvi0VvjYVgQMIa+C6UMiC7avc6uWoWPP2guR6F6QQyceIU5bT/s7fQ=="
-porcupine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
 
-# Configuración de PyAudio
-pa = pyaudio.PyAudio()
-audio_stream = pa.open(
-    rate=porcupine.sample_rate,
-    channels=1,
-    format=pyaudio.paInt16,
-    input=True,
-    frames_per_buffer=porcupine.frame_length
-)
-"""
 grabando = False
 detener = False
 
@@ -640,10 +585,35 @@ async def detener_grabacion(sid, data=None):
     grabando = False
     await sio.emit("detener_grabacion", {"message": "Grabación detenida por silencio"})
 
+# Liberar recursos - FUNCIÓN CORREGIDA
+def liberar_recursos():
+    global detener, audio_stream, pa, porcupine_engine
+    detener = True
+    
+    if audio_stream:
+        try:
+            audio_stream.close()
+        except:
+            pass
+    
+    if pa and AUDIO_BACKEND == "pyaudio":
+        try:
+            pa.terminate()
+        except:
+            pass
+    
+    if porcupine_engine:
+        try:
+            porcupine_engine.delete()
+        except:
+            pass
+    
+    print("Recursos liberados. Saliendo del programa...")
+
 # Escucha pasiva de palabra clave
 def escucha_pasiva():
     """Escucha pasiva - desactivada en Render"""
-    global grabando, detener
+    global grabando, detener, porcupine, audio_stream, AUDIO_BACKEND
     
     if porcupine is None or audio_stream is None:
         print("⚠️  Reconocimiento por voz desactivado en Render")
@@ -681,21 +651,14 @@ def escucha_pasiva():
     finally:
         liberar_recursos()
 
-# Liberar recursos
-def liberar_recursos():
-    global detener
-    detener = True
-    audio_stream.stop_stream()
-    audio_stream.close()
-    pa.terminate()
-    porcupine.delete()
-    print("Recursos liberados. Saliendo del programa...")
-
 # Main
-# app.py (antes M.0.1.py)
-# Cambia esta línea al FINAL del archivo:
 if __name__ == "__main__":
-    threading.Thread(target=escucha_pasiva, daemon=True).start()
+    # Solo iniciar escucha pasiva si tenemos audio configurado
+    if porcupine is not None and audio_stream is not None:
+        threading.Thread(target=escucha_pasiva, daemon=True).start()
+    else:
+        print("✅ Aplicación web iniciada sin reconocimiento por voz")
+    
     import uvicorn
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app_mount, host="0.0.0.0", port=port)
