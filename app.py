@@ -1,7 +1,6 @@
 import os
 import sys
 import platform
-import struct
 import threading
 import asyncio
 from fastapi import FastAPI, Request, UploadFile, Depends, Form, HTTPException, status, Response
@@ -18,117 +17,14 @@ from servicios.historial_service import HistorialService
 from servicios.auth_service import AuthService
 from funciones.comandos import ejecutar_comando
 
-# ====== CONFIGURACIÓN PARA RENDER ======
-# Detectar si estamos en Render
-IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true' or 'render' in os.getenv('HOSTNAME', '')
+# ====== DETECCIÓN DE ENTORNO ======
+IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true'
 
-# Variables globales para audio
-pyaudio = None
-pvporcupine = None
-pa = None
-audio_stream = None
-porcupine_engine = None
-
-# IMPORTAR PyAudio solo si NO estamos en Render
-SKIP_PYAUDIO = os.getenv('SKIP_PYAUDIO', 'true').lower() == 'true' or IS_RENDER
-
-def setup_audio_for_render():
-    """Configurar audio para entorno Render"""
-    print(f"Sistema operativo: {platform.system()}")
-    print(f"En Render: {IS_RENDER}")
-    
-    try:
-        if IS_RENDER:
-            print("Usando sounddevice como alternativa a PyAudio en Render...")
-            import sounddevice as sd
-            print(f"SoundDevice disponible. Dispositivos: {len(sd.query_devices())}")
-            return "sounddevice"
-        else:
-            # En desarrollo local, intentar PyAudio
-            import pyaudio
-            pa = pyaudio.PyAudio()
-            print(f"PyAudio disponible en desarrollo. Dispositivos: {pa.get_device_count()}")
-            return "pyaudio"
-    except ImportError as e:
-        print(f"Backend de audio no disponible: {e}")
-        return None
-    except Exception as e:
-        print(f"Error configurando audio: {e}")
-        return None
-
-# ====== CONFIGURACIÓN DE PORCUPINE (MODIFICADA) ======
-def setup_porcupine():
-    """Configurar Porcupine según backend disponible"""
-    global pyaudio, pvporcupine, pa, audio_stream, porcupine_engine
-    
-    try:
-        access_key = "jvi0VvjYVgQMIa+C6UMiC7avc6uWoWPP2guR6F6QQyceIU5bT/s7fQ=="
-        
-        # Inicializar backend de audio
-        AUDIO_BACKEND = setup_audio_for_render()
-        
-        if AUDIO_BACKEND == "sounddevice":
-            # Configuración para sounddevice
-            import sounddevice as sd
-            import numpy as np
-            import pvporcupine
-            
-            print("Porcupine configurado con sounddevice")
-            
-            class SoundDeviceStream:
-                def __init__(self, sample_rate=16000, frame_length=512):
-                    self.sample_rate = sample_rate
-                    self.frame_length = frame_length
-                    self.stream = sd.InputStream(
-                        samplerate=sample_rate,
-                        channels=1,
-                        dtype='int16',
-                        blocksize=frame_length
-                    )
-                    self.stream.start()
-                
-                def read(self, frame_length, exception_on_overflow=False):
-                    data, _ = self.stream.read(frame_length)
-                    return data.flatten().tobytes()
-                
-                def close(self):
-                    self.stream.stop()
-                    self.stream.close()
-            
-            porcupine_engine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
-            audio_stream = SoundDeviceStream(
-                sample_rate=porcupine_engine.sample_rate,
-                frame_length=porcupine_engine.frame_length
-            )
-            return porcupine_engine, audio_stream, AUDIO_BACKEND
-            
-        elif AUDIO_BACKEND == "pyaudio":
-            # Configuración original con PyAudio
-            import pyaudio
-            import pvporcupine
-            
-            pyaudio = pyaudio
-            porcupine_engine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
-            pa = pyaudio.PyAudio()
-            audio_stream = pa.open(
-                rate=porcupine_engine.sample_rate,
-                channels=1,
-                format=pyaudio.paInt16,
-                input=True,
-                frames_per_buffer=porcupine_engine.frame_length
-            )
-            return porcupine_engine, audio_stream, AUDIO_BACKEND
-            
-        else:
-            print("⚠️  Backend de audio no disponible. Desactivando reconocimiento por voz.")
-            return None, None, None
-            
-    except Exception as e:
-        print(f"Error configurando Porcupine: {e}")
-        return None, None, None
-
-# Inicializar Porcupine
-porcupine, audio_stream, AUDIO_BACKEND = setup_porcupine()
+print("=" * 50)
+print(f"Sistema: {platform.system()}")
+print(f"Python: {sys.version}")
+print(f"En Render: {IS_RENDER}")
+print("=" * 50)
 
 # Configuración de FastAPI
 app = FastAPI()
@@ -178,7 +74,8 @@ async def asistente(request: Request, db: Session = Depends(get_db)):
     
     return templates.TemplateResponse("./Asistente/M.0.1.html", {
         "request": request,
-        "usuario": usuario.usuario if usuario else "Invitado"
+        "usuario": usuario.usuario if usuario else "Invitado",
+        "modo_render": IS_RENDER
     })
 
 # Redirigir la raíz al asistente si está autenticado, o al login si no
@@ -188,13 +85,11 @@ async def raiz(request: Request):
     usuario_id = request.cookies.get("usuario_id")
     
     if usuario_id:
-        # Usuario autenticado, redirigir al asistente
         return RedirectResponse(url="/asistente", status_code=status.HTTP_303_SEE_OTHER)
     else:
-        # No autenticado, redirigir al login
         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
-# Rutas de autenticación
+# Rutas de autenticación (se mantienen igual que antes)
 @app.get("/login", response_class=HTMLResponse)
 async def mostrar_login(request: Request, error: str = None, success: str = None):
     return templates.TemplateResponse("login/inicio_sesion.html", {
@@ -219,15 +114,13 @@ async def iniciar_sesion(
                 "error": "Usuario o contraseña incorrectos"
             })
         
-        # Crear respuesta con redirección y cookie
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
         response.set_cookie(
             key="usuario_id",
             value=str(usuario_db.id),
             httponly=True,
-            max_age=86400  # 24 horas
+            max_age=86400
         )
-        
         return response
         
     except Exception as e:
@@ -255,24 +148,20 @@ async def registrar_usuario(
     db: Session = Depends(get_db)
 ):
     try:
-        # Validar que las contraseñas coincidan
         if contraseña != confirmar_contraseña:
             return templates.TemplateResponse("login/registro.html", {
                 "request": request,
                 "error": "Las contraseñas no coinciden"
             })
         
-        # Validar longitud mínima de contraseña
         if len(contraseña) < 6:
             return templates.TemplateResponse("login/registro.html", {
                 "request": request,
                 "error": "La contraseña debe tener al menos 6 caracteres"
             })
         
-        # Registrar usuario
         usuario_db = AuthService.registrar_usuario(db, nombre_completo, usuario, correo, contraseña)
         
-        # Iniciar sesión automáticamente después del registro
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
         response.set_cookie(
             key="usuario_id",
@@ -280,7 +169,6 @@ async def registrar_usuario(
             httponly=True,
             max_age=86400
         )
-        
         return response
         
     except ValueError as e:
@@ -321,7 +209,6 @@ async def solicitar_recuperacion(
     try:
         resultado = AuthService.generar_codigo_recuperacion(db, usuario_correo)
         
-        # Redirigir al paso 2
         return RedirectResponse(
             url=f"/recuperacion?usuario={usuario_correo}&step=2&info=Código enviado a {resultado['correo']}",
             status_code=status.HTTP_303_SEE_OTHER
@@ -338,7 +225,6 @@ async def solicitar_recuperacion(
             "error": f"Error al solicitar recuperación: {str(e)}"
         })
 
-# FUNCIÓN CORREGIDA - SOLO UNA VEZ
 @app.post("/recuperacion/verificar")
 async def verificar_codigo_recuperacion(
     request: Request,
@@ -347,16 +233,11 @@ async def verificar_codigo_recuperacion(
     marcar_como_utilizado: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    """Verificar código de recuperación"""
     try:
         usuario_id = AuthService.validar_codigo_recuperacion(
-            db, 
-            usuario_correo, 
-            codigo, 
-            marcar_como_utilizado=marcar_como_utilizado
+            db, usuario_correo, codigo, marcar_como_utilizado=marcar_como_utilizado
         )
         
-        # Redirigir al paso 3
         return RedirectResponse(
             url=f"/recuperacion?usuario={usuario_correo}&codigo={codigo}&step=3",
             status_code=status.HTTP_303_SEE_OTHER
@@ -386,9 +267,7 @@ async def cambiar_contraseña_recuperacion(
     confirmar_nueva_contraseña: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    """Cambiar contraseña después de verificación"""
     try:
-        # Validar que las contraseñas coincidan
         if nueva_contraseña != confirmar_nueva_contraseña:
             return templates.TemplateResponse("login/recuperacion.html", {
                 "request": request,
@@ -398,7 +277,6 @@ async def cambiar_contraseña_recuperacion(
                 "step": 3
             })
         
-        # Validar longitud mínima
         if len(nueva_contraseña) < 6:
             return templates.TemplateResponse("login/recuperacion.html", {
                 "request": request,
@@ -408,10 +286,10 @@ async def cambiar_contraseña_recuperacion(
                 "step": 3
             })
         
-        # Validar el código sin marcarlo como usado
-        usuario_id = AuthService.validar_codigo_recuperacion(db, usuario_correo, codigo, marcar_como_utilizado=False)
+        usuario_id = AuthService.validar_codigo_recuperacion(
+            db, usuario_correo, codigo, marcar_como_utilizado=False
+        )
         
-        # Cambiar contraseña y marcar código como usado
         AuthService.cambiar_contraseña(db, usuario_id, nueva_contraseña, codigo)
         
         return RedirectResponse(
@@ -442,7 +320,7 @@ async def cerrar_sesion():
     response.delete_cookie("usuario_id")
     return response
 
-# Ruta para procesar audio (actualizada para usar usuario_id)
+# Ruta para procesar audio - SIN PyAudio, solo grabación web
 @app.post("/audio")
 async def audio(audio: UploadFile, request: Request, db: Session = Depends(get_db)):
     try:
@@ -468,7 +346,7 @@ async def audio(audio: UploadFile, request: Request, db: Session = Depends(get_d
         except Exception as e:
             return JSONResponse({"error": f"Error al convertir el audio: {str(e)}"}, status_code=500)
 
-        # Transcribir
+        # Transcribir usando SpeechRecognition (no requiere PyAudio)
         recognizer = sr.Recognizer()
         with sr.AudioFile(wav_path) as source:
             audio_data = recognizer.record(source)
@@ -482,7 +360,7 @@ async def audio(audio: UploadFile, request: Request, db: Session = Depends(get_d
             
         text = recognizer.recognize_google(audio_data, language="es-ES")
         
-        # Ejecutar comando en un thread separado, pero necesitamos crear nueva sesión
+        # Ejecutar comando
         def ejecutar_comando_con_db():
             from db.models import get_db
             from funciones.comandos import ejecutar_comando
@@ -503,14 +381,13 @@ async def audio(audio: UploadFile, request: Request, db: Session = Depends(get_d
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-# Rutas para el historial (actualizadas para usar usuario_id)
+# Rutas para el historial
 @app.get("/historial")
 async def obtener_historial(
     request: Request,
     db: Session = Depends(get_db), 
     buscar: str = None
 ):
-    """Obtener todo el historial o buscar por texto"""
     usuario_id = request.state.usuario_id
     
     if buscar:
@@ -527,7 +404,6 @@ async def actualizar_registro(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Actualizar un registro del historial"""
     usuario_id = request.state.usuario_id
     registro = HistorialService.actualizar_registro(
         db, registro_id, 
@@ -545,7 +421,6 @@ async def eliminar_registro(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Eliminar un registro (eliminación lógica)"""
     usuario_id = request.state.usuario_id
     if HistorialService.eliminar_registro(db, registro_id, usuario_id):
         return {"mensaje": "Registro eliminado"}
@@ -553,7 +428,6 @@ async def eliminar_registro(
 
 @app.post("/historial/reportes/pdf")
 async def generar_reporte_pdf(request: Request, db: Session = Depends(get_db)):
-    """Generar reporte en formato PDF"""
     usuario_id = request.state.usuario_id
     usuario = AuthService.obtener_usuario_por_id(db, usuario_id)
     
@@ -567,97 +441,32 @@ async def generar_reporte_pdf(request: Request, db: Session = Depends(get_db)):
 # SocketIO app mount
 app_mount = socketio.ASGIApp(sio, app)
 
-grabando = False
-detener = False
+# Eventos de SocketIO (solo para grabación web)
+@sio.on("iniciar_grabacion_web")
+async def iniciar_grabacion_web(sid, data=None):
+    print("Grabación web iniciada desde cliente")
+    await sio.emit("grabacion_iniciada", {"message": "Listo para grabar"})
 
-# Función para iniciar grabación
-async def iniciar_grabacion():
-    global grabando
-    print("Iniciando grabación...")
-    grabando = True
-    await sio.emit("iniciar_grabacion", {"message": "Grabación iniciada"})
-
-# Evento de detener grabación desde cliente
 @sio.on("detener_grabacion")
-async def detener_grabacion(sid, data=None):
-    global grabando
-    print("Grabación detenida owo.")
-    grabando = False
-    await sio.emit("detener_grabacion", {"message": "Grabación detenida por silencio"})
+async def detener_grabacion_web(sid, data=None):
+    print("Grabación web detenida")
+    await sio.emit("grabacion_detenida", {"message": "Grabación detenida"})
 
-# Liberar recursos - FUNCIÓN CORREGIDA
-def liberar_recursos():
-    global detener, audio_stream, pa, porcupine_engine
-    detener = True
-    
-    if audio_stream:
-        try:
-            audio_stream.close()
-        except:
-            pass
-    
-    if pa and AUDIO_BACKEND == "pyaudio":
-        try:
-            pa.terminate()
-        except:
-            pass
-    
-    if porcupine_engine:
-        try:
-            porcupine_engine.delete()
-        except:
-            pass
-    
-    print("Recursos liberados. Saliendo del programa...")
-
-# Escucha pasiva de palabra clave
-def escucha_pasiva():
-    """Escucha pasiva - desactivada en Render"""
-    global grabando, detener, porcupine, audio_stream, AUDIO_BACKEND
-    
-    if porcupine is None or audio_stream is None:
-        print("⚠️  Reconocimiento por voz desactivado en Render")
-        print("✅ Modo web funcionando correctamente")
-        return  # Salir temprano
-    
-    try:
-        while not detener:
-            if AUDIO_BACKEND == "sounddevice":
-                # Leer audio con sounddevice
-                import numpy as np
-                pcm = audio_stream.read(porcupine.frame_length)
-                pcm_array = np.frombuffer(pcm, dtype=np.int16)
-                result = porcupine.process(pcm_array)
-                
-            elif AUDIO_BACKEND == "pyaudio":
-                # Leer audio con PyAudio
-                pcm = audio_stream.read(porcupine.frame_length, exception_on_overflow=False)
-                pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
-                result = porcupine.process(pcm)
-            else:
-                # Sin audio, salir del loop
-                break
-            
-            if result >= 0 and not grabando:
-                print("¡Palabra clave detectada!")
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(iniciar_grabacion())
-                
-    except KeyboardInterrupt:
-        print("\nInterrumpido manualmente.")
-    except Exception as e:
-        print(f"Error en escucha pasiva: {e}")
-    finally:
-        liberar_recursos()
+# Información del sistema
+@app.get("/info")
+async def info_sistema():
+    return {
+        "sistema": platform.system(),
+        "python_version": sys.version,
+        "en_render": IS_RENDER,
+        "modo_audio": "solo_web"
+    }
 
 # Main
 if __name__ == "__main__":
-    # Solo iniciar escucha pasiva si tenemos audio configurado
-    if porcupine is not None and audio_stream is not None:
-        threading.Thread(target=escucha_pasiva, daemon=True).start()
-    else:
-        print("✅ Aplicación web iniciada sin reconocimiento por voz")
+    print("🚀 Iniciando aplicación en modo web...")
+    print("✅ Reconocimiento por voz disponible solo a través de grabación web")
+    print("❌ Escucha pasiva desactivada (no compatible con Render)")
     
     import uvicorn
     port = int(os.getenv("PORT", 8000))
