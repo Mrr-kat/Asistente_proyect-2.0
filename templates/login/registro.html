@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Asistente Virtual</title>
+    <link rel="stylesheet" href="/static/estilos/login.css">
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            padding: 2rem;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .register-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+        }
+
+        .register-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .register-link {
+            color: #4facfe;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .register-link:hover {
+            color: #00f2fe;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-message {
+            background: #e8f6ef;
+            color: #27ae60;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #27ae60;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            color: #4facfe;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .password-requirements {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo">
+            <box-icon name='user-plus' class="logo-icon"></box-icon>
+        </div>
+        
+        <div class="register-header">
+            <h1>Crear Cuenta</h1>
+            <p>Regístrate para usar el Asistente Virtual</p>
+        </div>
+
+        {% if error %}
+        <div class="error-message">
+            <box-icon name='error' color="#c33"></box-icon>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success-message">
+            <box-icon name='check-circle' color="#27ae60"></box-icon>
+            {{ success }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/registro">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="nombre_completo">
+                        <box-icon name='user'></box-icon>
+                        Nombre completo
+                    </label>
+                    <input type="text" id="nombre_completo" name="nombre_completo" class="form-input" required 
+                           placeholder="Ej: Juan Pérez">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="usuario">
+                    <box-icon name='user-circle'></box-icon>
+                    Nombre de usuario
+                </label>
+                <input type="text" id="usuario" name="usuario" class="form-input" required 
+                       placeholder="Ej: juan123">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="correo">
+                    <box-icon name='envelope'></box-icon>
+                    Correo electrónico
+                </label>
+                <input type="email" id="correo" name="correo" class="form-input" required 
+                       placeholder="Ej: juan@ejemplo.com">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="contraseña">
+                    <box-icon name='lock-alt'></box-icon>
+                    Contraseña
+                </label>
+                <input type="password" id="contraseña" name="contraseña" class="form-input" required 
+                       placeholder="Mínimo 6 caracteres">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmar_contraseña">
+                    <box-icon name='lock'></box-icon>
+                    Confirmar contraseña
+                </label>
+                <input type="password" id="confirmar_contraseña" name="confirmar_contraseña" class="form-input" required 
+                       placeholder="Repite tu contraseña">
+            </div>
+
+            <button type="submit" class="btn-register">
+                <box-icon name='user-plus'></box-icon>
+                Crear Cuenta
+            </button>
+        </form>
+
+        <div class="register-links">
+            <p>¿Ya tienes una cuenta? <a href="/login" class="register-link">Inicia sesión</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Validación de contraseñas
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('contraseña').value;
+            const confirmPassword = document.getElementById('confirmar_contraseña').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('La contraseña debe tener al menos 6 caracteres');
+                return false;
+            }
+            
+            return true;
+        });
+
+        // Limpiar mensajes después de 5 segundos
+        setTimeout(() => {
+            const messages = document.querySelectorAll('.error-message, .success-message');
+            messages.forEach(msg => {
+                msg.style.opacity = '0';
+                msg.style.transition = 'opacity 0.5s';
+                setTimeout(() => msg.remove(), 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

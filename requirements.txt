@@ -1,0 +1,57 @@
+# FastAPI y dependencias
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Base de datos
+sqlalchemy
+
+# WebSockets y comunicación en tiempo real
+python-socketio
+aiohttp
+websockets
+
+# Reconocimiento de voz y audio
+speechrecognition
+pyaudio
+pydub
+
+# Síntesis de voz
+pyttsx3
+pywin32  # Solo para Windows, opcional para otros sistemas
+
+# Control de navegador y web
+pywhatkit
+pyautogui
+webbrowser
+psutil
+
+# Búsquedas web y APIs
+wikipedia
+googlesearch-python
+requests
+beautifulsoup4
+
+# Manipulación de URLs
+urllib3
+
+# Porcupine para detección de palabra clave
+pvporcupine
+
+# Generación de PDFs
+reportlab
+
+# Envío de correos
+secure-smtplib
+
+# Variables de entorno (opcional, buena práctica)
+python-dotenv
+
+# Seguridad
+passlib[bcrypt]
+bcrypt
+
+# Utilidades generales
+pillow
+numpy
+pandas  # Para posibles análisis de datos

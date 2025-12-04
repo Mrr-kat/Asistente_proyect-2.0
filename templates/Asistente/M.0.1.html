@@ -1,0 +1,83 @@
+<!-- templates/Asistente/M.0.1.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M.0.1 - Asistente Virtual</title>
+    <link rel="stylesheet" href="/static/estilos/M.0.1.css">
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+</head>
+<body>
+    
+    <header class="header">
+        <div class="logo">
+        </div>
+        <nav class="navegacion">
+            <button id="btn-asistente" class="nav-btn active">
+                <box-icon name='microphone'></box-icon>
+                <span>Asistente</span>
+            </button>
+            <button id="btn-historial" class="nav-btn">
+                <box-icon name='history'></box-icon>
+                <span>Historial</span>
+            </button>
+        </nav>
+        
+        <div class="user-menu">
+            <span class="username">Hola, {{ usuario }}</span>
+            <button id="btn-logout" class="logout-btn" title="Cerrar sesión">
+                <box-icon name='log-out'></box-icon>
+            </button>
+        </div>
+    </header>
+
+    <section id="seccion-asistente" class="seccion activa">
+        <div class="asistente-container">
+            <div class="mic-container">
+                <button id="microfono" class="mic-btn">
+                    <box-icon name="microphone"></box-icon>
+                </button>
+            </div>
+            <div id="transcripcion" class="transcripcion"></div>
+            <audio id="audioReproducir" controls class="audio-player"></audio>
+        </div>
+    </section>
+
+
+    <section id="seccion-historial" class="seccion">
+        <div class="historial-header">
+            <h2>Historial</h2>
+            
+            <div class="controles-historial">
+                <div class="busqueda-container">
+                    <input type="text" id="buscar-historial" placeholder=" Buscar en historial...">
+                    <button id="btn-buscar" class="btn-primary">Buscar</button>
+                </div>
+                
+                <div class="acciones-container">
+                    <button id="btn-generar-reporte" class="btn-secondary">
+                        <box-icon name='download'></box-icon>
+                        PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="estadisticas" class="estadisticas-card" style="display: none;"></div>
+        
+        <div id="lista-historial" class="lista-historial"></div>
+    </section>
+
+    <script src="/static/acciones/M.0.1.JS"></script>
+    <script src="/static/acciones/historial.js"></script>
+    <script>
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            window.location.href = '/logout';
+        }
+    });
+</script>
+</body>
+</html>

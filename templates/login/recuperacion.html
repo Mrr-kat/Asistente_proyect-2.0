@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña - Asistente Virtual</title>
+    <link rel="stylesheet" href="/static/estilos/login.css">
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        .recovery-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .recovery-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .recovery-header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .recovery-header p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step.active {
+            background: #f5576c;
+            color: white;
+        }
+
+        .step.completed {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .code-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .code-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .code-input:focus {
+            border-color: #f5576c;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(245, 87, 108, 0.2);
+        }
+
+        .btn-recovery {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 1rem;
+        }
+
+        .btn-recovery:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-recovery:active {
+            transform: translateY(0);
+        }
+
+        .recovery-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .recovery-link {
+            color: #f5576c;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .recovery-link:hover {
+            color: #f093fb;
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-message {
+            background: #e8f6ef;
+            color: #27ae60;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #27ae60;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-message {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #1565c0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            color: #f5576c;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .resend-link {
+            color: #f5576c;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .resend-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="recovery-container">
+        <div class="logo">
+            <box-icon name='key' class="logo-icon"></box-icon>
+        </div>
+        
+        <div class="recovery-header">
+            <h1>Recuperar Contraseña</h1>
+            <p>Sigue los pasos para recuperar tu contraseña</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active" id="step1">1</div>
+            <div class="step" id="step2">2</div>
+            <div class="step" id="step3">3</div>
+        </div>
+
+        {% if error %}
+        <div class="error-message">
+            <box-icon name='error' color="#c33"></box-icon>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success-message">
+            <box-icon name='check-circle' color="#27ae60"></box-icon>
+            {{ success }}
+        </div>
+        {% endif %}
+
+        {% if info %}
+        <div class="info-message">
+            <box-icon name='info-circle' color="#1565c0"></box-icon>
+            {{ info }}
+        </div>
+        {% endif %}
+
+        <!-- Paso 1: Ingresar usuario/correo -->
+        <div id="step1-content" class="step-content active">
+            <form method="POST" action="/recuperacion/solicitar">
+                <div class="form-group">
+                    <label class="form-label" for="usuario_correo">
+                        <box-icon name='user'></box-icon>
+                        Usuario o correo electrónico
+                    </label>
+                    <input type="text" id="usuario_correo" name="usuario_correo" class="form-input" required 
+                           placeholder="Ingresa tu usuario o correo">
+                </div>
+
+                <button type="submit" class="btn-recovery">
+                    <box-icon name='send'></box-icon>
+                    Enviar Código
+                </button>
+            </form>
+
+            <div class="recovery-links">
+                <p><a href="/login" class="recovery-link">← Volver al inicio de sesión</a></p>
+            </div>
+        </div>
+
+        <!-- Paso 2: Ingresar código -->
+        <div id="step2-content" class="step-content">
+            <p>Hemos enviado un código de 5 dígitos a tu correo electrónico. Ingresa el código a continuación:</p>
+            
+            <form method="POST" action="/recuperacion/verificar" id="verificar-form">
+                <input type="hidden" id="usuario_correo_verificar" name="usuario_correo">
+                
+                <div class="code-inputs">
+                    <input type="text" maxlength="1" class="code-input" data-index="1" pattern="[0-9]">
+                    <input type="text" maxlength="1" class="code-input" data-index="2" pattern="[0-9]">
+                    <input type="text" maxlength="1" class="code-input" data-index="3" pattern="[0-9]">
+                    <input type="text" maxlength="1" class="code-input" data-index="4" pattern="[0-9]">
+                    <input type="text" maxlength="1" class="code-input" data-index="5" pattern="[0-9]">
+                </div>
+                
+                <input type="hidden" id="codigo_verificacion" name="codigo">
+
+                <div class="timer" id="timer">
+                    El código expira en: <span id="countdown">60:00</span>
+                </div>
+
+                <button type="submit" class="btn-recovery">
+                    <box-icon name='check'></box-icon>
+                    Verificar Código
+                </button>
+            </form>
+
+            <div class="recovery-links">
+                <p>¿No recibiste el código? <a href="#" class="resend-link" id="resend-code">Reenviar código</a></p>
+                <p><a href="#" class="recovery-link" id="back-to-step1">← Cambiar usuario/correo</a></p>
+            </div>
+        </div>
+
+        <!-- Paso 3: Nueva contraseña -->
+        <div id="step3-content" class="step-content">
+            <form method="POST" action="/recuperacion/cambiar" id="cambiar-form">
+                <input type="hidden" id="usuario_correo_cambiar" name="usuario_correo">
+                <input type="hidden" id="codigo_cambiar" name="codigo">
+                
+                <div class="form-group">
+                    <label class="form-label" for="nueva_contraseña">
+                        <box-icon name='lock-alt'></box-icon>
+                        Nueva contraseña
+                    </label>
+                    <input type="password" id="nueva_contraseña" name="nueva_contraseña" class="form-input" required 
+                           placeholder="Mínimo 6 caracteres">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmar_nueva_contraseña">
+                        <box-icon name='lock'></box-icon>
+                        Confirmar nueva contraseña
+                    </label>
+                    <input type="password" id="confirmar_nueva_contraseña" name="confirmar_nueva_contraseña" 
+                           class="form-input" required placeholder="Repite la contraseña">
+                </div>
+
+                <button type="submit" class="btn-recovery">
+                    <box-icon name='refresh'></box-icon>
+                    Cambiar Contraseña
+                </button>
+            </form>
+        </div>
+    </div>
+
+<!-- Añade este script al final del archivo, antes del </body> -->
+<script>
+// Manejo completo de la recuperación
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const step = parseInt(urlParams.get('step')) || 1;
+    
+    // Ir al paso actual
+    goToStep(step);
+    
+    // Configurar inputs de código
+    setupCodeInputs();
+    
+    // Configurar reenvío de código
+    setupResendCode();
+    
+    // Configurar navegación entre pasos
+    setupNavigation();
+});
+
+function goToStep(step) {
+    // Actualizar URL sin recargar
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('step', step);
+    window.history.replaceState({}, '', `?${urlParams.toString()}`);
+    
+    // Actualizar indicadores
+    document.querySelectorAll('.step').forEach((stepEl, index) => {
+        const stepNumber = index + 1;
+        if (stepNumber < step) {
+            stepEl.className = 'step completed';
+        } else if (stepNumber === step) {
+            stepEl.className = 'step active';
+        } else {
+            stepEl.className = 'step';
+        }
+    });
+    
+    // Mostrar contenido del paso
+    document.querySelectorAll('.step-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    const currentStep = document.getElementById(`step${step}-content`);
+    if (currentStep) {
+        currentStep.classList.add('active');
+        
+        // Prellenar datos si están en la URL
+        if (step === 2 && urlParams.has('usuario')) {
+            const usuario = urlParams.get('usuario');
+            document.getElementById('usuario_correo_verificar').value = usuario;
+            startTimer(3600); // 1 hora
+        }
+        
+        if (step === 3 && urlParams.has('usuario') && urlParams.has('codigo')) {
+            document.getElementById('usuario_correo_cambiar').value = urlParams.get('usuario');
+            document.getElementById('codigo_cambiar').value = urlParams.get('codigo');
+        }
+    }
+}
+
+function setupCodeInputs() {
+    const codeInputs = document.querySelectorAll('.code-input');
+    const hiddenCode = document.getElementById('codigo_verificacion');
+    
+    if (!codeInputs.length) return;
+    
+    codeInputs.forEach((input, index) => {
+        // Prevenir entrada no numérica
+        input.addEventListener('input', (e) => {
+            const value = e.target.value.replace(/\D/g, '');
+            e.target.value = value.slice(0, 1);
+            
+            // Mover al siguiente input
+            if (value && index < codeInputs.length - 1) {
+                codeInputs[index + 1].focus();
+            }
+            
+            // Actualizar campo oculto
+            updateHiddenCode();
+        });
+        
+        // Manejar teclas especiales
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                codeInputs[index - 1].focus();
+            } else if (e.key === 'ArrowLeft' && index > 0) {
+                codeInputs[index - 1].focus();
+            } else if (e.key === 'ArrowRight' && index < codeInputs.length - 1) {
+                codeInputs[index + 1].focus();
+            }
+        });
+        
+        // Pegar código completo
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text').replace(/\D/g, '');
+            if (pastedData.length === 5) {
+                for (let i = 0; i < 5; i++) {
+                    if (codeInputs[i]) {
+                        codeInputs[i].value = pastedData[i] || '';
+                    }
+                }
+                updateHiddenCode();
+                codeInputs[4].focus();
+            }
+        });
+    });
+    
+    function updateHiddenCode() {
+        const code = Array.from(codeInputs).map(input => input.value).join('');
+        hiddenCode.value = code;
+    }
+}
+
+// Reemplaza la función setupResendCode con esta versión completa
+function setupResendCode() {
+    const resendLink = document.getElementById('resend-code');
+    if (!resendLink) return;
+    
+    let canResend = true;
+    let resendCooldown = 60; // 60 segundos de cooldown
+    
+    resendLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        if (!canResend) {
+            alert(`Espera ${resendCooldown} segundos antes de reenviar`);
+            return;
+        }
+        
+        const usuario = document.getElementById('usuario_correo_verificar').value;
+        
+        if (!usuario) {
+            alert('Por favor, ingresa tu usuario o correo primero');
+            return;
+        }
+        
+        // Mostrar indicador de carga
+        const originalText = resendLink.textContent;
+        resendLink.textContent = 'Enviando...';
+        resendLink.style.opacity = '0.7';
+        
+        try {
+            const formData = new FormData();
+            formData.append('usuario_correo', usuario);
+            
+            const response = await fetch('/recuperacion/reenviar', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                alert('✅ Código reenviado. Revisa tu correo electrónico.');
+                
+                // Reiniciar temporizador principal
+                clearInterval(window.timerInterval);
+                startTimer(3600);
+                
+                // Limpiar inputs de código
+                document.querySelectorAll('.code-input').forEach(input => input.value = '');
+                document.getElementById('codigo_verificacion').value = '';
+                document.querySelector('.code-input:first-child').focus();
+                
+                // Activar cooldown
+                startResendCooldown();
+                
+            } else {
+                alert('❌ Error: ' + (data.error || 'No se pudo reenviar el código'));
+            }
+            
+        } catch (error) {
+            alert('❌ Error de conexión. Intenta nuevamente.');
+            console.error('Error:', error);
+        } finally {
+            // Restaurar texto del botón
+            resendLink.textContent = originalText;
+            resendLink.style.opacity = '1';
+        }
+    });
+    
+    function startResendCooldown() {
+        canResend = false;
+        const originalText = resendLink.textContent;
+        let secondsLeft = resendCooldown;
+        
+        const cooldownInterval = setInterval(() => {
+            resendLink.textContent = `Reenviar (${secondsLeft}s)`;
+            resendLink.style.opacity = '0.5';
+            secondsLeft--;
+            
+            if (secondsLeft < 0) {
+                clearInterval(cooldownInterval);
+                resendLink.textContent = originalText;
+                resendLink.style.opacity = '1';
+                canResend = true;
+            }
+        }, 1000);
+    }
+    
+    // Iniciar cooldown si ya se envió un código
+    if (document.getElementById('usuario_correo_verificar').value) {
+        startResendCooldown();
+    }
+}
+
+function setupNavigation() {
+    const backLink = document.getElementById('back-to-step1');
+    if (backLink) {
+        backLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            goToStep(1);
+        });
+    }
+}
+
+function startTimer(duration) {
+    let timer = duration;
+    const display = document.getElementById('countdown');
+    const verifyButton = document.querySelector('#verificar-form .btn-recovery');
+    
+    if (!display) return;
+    
+    // Limpiar timer anterior
+    if (window.timerInterval) {
+        clearInterval(window.timerInterval);
+    }
+    
+    function updateTimer() {
+        const hours = Math.floor(timer / 3600);
+        const minutes = Math.floor((timer % 3600) / 60);
+        const seconds = timer % 60;
+        
+        display.textContent = 
+            `${hours.toString().padStart(2, '0')}:` +
+            `${minutes.toString().padStart(2, '0')}:` +
+            `${seconds.toString().padStart(2, '0')}`;
+        
+        // Cambiar color cuando falten 5 minutos
+        if (timer <= 300) { // 5 minutos = 300 segundos
+            display.style.color = '#f5576c';
+            display.style.fontWeight = 'bold';
+        }
+        
+        // Cambiar color cuando falten 1 minuto
+        if (timer <= 60) {
+            display.style.color = '#ff0000';
+            display.style.animation = 'pulse 1s infinite';
+        }
+        
+        if (--timer < 0) {
+            clearInterval(window.timerInterval);
+            display.textContent = 'Código Expirado';
+            display.style.color = '#ff0000';
+            
+            if (verifyButton) {
+                verifyButton.disabled = true;
+                verifyButton.style.opacity = '0.5';
+                verifyButton.textContent = 'Código Expirado';
+            }
+            
+            // Deshabilitar inputs de código
+            document.querySelectorAll('.code-input').forEach(input => {
+                input.disabled = true;
+                input.style.opacity = '0.5';
+            });
+        }
+    }
+    
+    updateTimer();
+    window.timerInterval = setInterval(updateTimer, 1000);
+}
+</script>
+</body>
+</html>

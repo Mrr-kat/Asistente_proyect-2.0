@@ -1,0 +1,477 @@
+/* static/estilos/M.0.1.css */
+
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo h1 {
+    color: #4a5568;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.navegacion {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.nav-btn:hover {
+    background-color: #edf2f7;
+    transform: translateY(-2px);
+}
+
+.nav-btn.active {
+    background-color: #667eea;
+    color: white;
+    border-color: #667eea;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);
+}
+
+/* Secciones */
+.seccion {
+    display: none;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.seccion.activa {
+    display: block;
+}
+
+/* Estilos del asistente */
+.asistente-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 2rem;
+}
+
+.mic-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.mic-btn {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.mic-btn:hover {
+    transform: scale(1.05);
+}
+
+.transcripcion {
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 600px;
+    min-height: 100px;
+    text-align: center;
+    font-size: 1.1rem;
+    color: #4a5568;
+}
+
+/* Estilos del historial */
+.historial-header {
+    margin-bottom: 2rem;
+}
+
+.historial-header h2 {
+    color: #4a5568;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+}
+
+.controles-historial {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.busqueda-container {
+    display: flex;
+    gap: 0.5rem;
+    flex-grow: 1;
+    max-width: 500px;
+}
+
+#buscar-historial {
+    flex-grow: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+#buscar-historial:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.acciones-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-primary, .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #48bb78;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #38a169;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #edf2f7;
+    color: #4a5568;
+}
+
+.btn-secondary:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-2px);
+}
+
+/* Lista de historial */
+.lista-historial {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.registro-historial {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.registro-historial:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.registro-comando, .registro-respuesta {
+    margin-bottom: 1rem;
+}
+
+.comando-label, .respuesta-label {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.comando-texto, .respuesta-texto {
+    padding: 1rem;
+    background-color: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    color: #4a5568;
+}
+
+.respuesta-texto {
+    border-left-color: #48bb78;
+}
+
+.registro-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.registro-fecha {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.registro-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-editar, .btn-eliminar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-editar {
+    background-color: #ed8936;
+    color: white;
+}
+
+.btn-editar:hover {
+    background-color: #dd7711;
+    transform: scale(1.1);
+}
+
+.btn-eliminar {
+    background-color: #f56565;
+    color: white;
+}
+
+.btn-eliminar:hover {
+    background-color: #e53e3e;
+    transform: scale(1.1);
+}
+
+.sin-registros {
+    text-align: center;
+    padding: 3rem;
+    color: #a0aec0;
+    font-size: 1.2rem;
+}
+
+/* Estadísticas */
+.estadisticas-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.estadisticas-card h3 {
+    color: #4a5568;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background-color: #f7fafc;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+/* Estilos del microfono (sin modificar) */
+#microfono {
+    padding: 10px 20px;
+    font-size: 24px;
+    background-color: #4CAF50; /* Color cuando está apagado (verde) */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+  
+#microfono.grabando {
+    background-color: #f44336; /* Color cuando está grabando (rojo) */
+    transform: scale(1.1); /* Efecto de aumento al grabar */
+}
+  
+#microfono:hover {
+    background-color: #45a049; /* Color al pasar el mouse (verde más oscuro) */
+}
+  
+#microfono.grabando:hover {
+    background-color: #e53935; /* Color al pasar el mouse mientras está grabando (rojo más oscuro) */
+}
+
+#audioReproducir{
+    display: none;
+}
+
+#sonidoConfirmacion{
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .controles-historial {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .busqueda-container {
+        max-width: 100%;
+    }
+    
+    .registro-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .seccion {
+        padding: 1rem;
+    }
+}
+
+#microfono {
+    padding: 10px 20px;
+    font-size: 24px;
+    background-color: #4CAF50; /* Color cuando está apagado (verde) */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  #microfono.grabando {
+    background-color: #f44336; /* Color cuando está grabando (rojo) */
+    transform: scale(1.1); /* Efecto de aumento al grabar */
+  }
+  
+  #microfono:hover {
+    background-color: #45a049; /* Color al pasar el mouse (verde más oscuro) */
+  }
+  
+  #microfono.grabando:hover {
+    background-color: #e53935; /* Color al pasar el mouse mientras está grabando (rojo más oscuro) */
+  }
+  #audioReproducir{
+    display: none;
+  }
+  #sonidoConfirmacion{
+    display: none;
+  }
+
+
+
+
+   /* Agrega estos estilos para el user-menu */
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+
+        .username {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .logout-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c53030;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
