@@ -119,7 +119,7 @@ class AuthService:
         """Enviar correo usando Gmail SMTP"""
         
         # Obtener credenciales de variables de entorno
-        remitente = os.getenv("CORRE_USU")
+        remitente = os.getenv("CORREO_USU")
         password = os.getenv("CORREO_CON")
         
         # Verificar credenciales
