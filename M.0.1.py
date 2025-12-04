@@ -617,22 +617,43 @@ async def detener_grabacion(sid, data=None):
 
 # Escucha pasiva de palabra clave
 def escucha_pasiva():
+    """Escucha pasiva de palabra clave - versión adaptada para Render"""
     global grabando, detener
-    print("Escuchando palabra clave...")
+    
+    if not porcupine or not audio_stream:
+        print("⚠️  Reconocimiento por voz desactivado. Modo solo web activo.")
+        return
+    
+    print("Escuchando palabra clave 'alexa'...")
+    
     try:
         while not detener:
-            pcm = audio_stream.read(porcupine.frame_length, exception_on_overflow=False)
-            pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
-            result = porcupine.process(pcm)
-
+            if AUDIO_BACKEND == "sounddevice":
+                # Leer audio con sounddevice
+                import numpy as np
+                pcm = audio_stream.read(porcupine.frame_length)
+                pcm_array = np.frombuffer(pcm, dtype=np.int16)
+                result = porcupine.process(pcm_array)
+                
+            elif AUDIO_BACKEND == "pyaudio":
+                # Leer audio con PyAudio
+                pcm = audio_stream.read(porcupine.frame_length, exception_on_overflow=False)
+                pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
+                result = porcupine.process(pcm)
+            else:
+                # Sin audio, salir del loop
+                break
+            
             if result >= 0 and not grabando:
                 print("¡Palabra clave detectada!")
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 loop.run_until_complete(iniciar_grabacion())
-
+                
     except KeyboardInterrupt:
         print("\nInterrumpido manualmente.")
+    except Exception as e:
+        print(f"Error en escucha pasiva: {e}")
     finally:
         liberar_recursos()
 
