@@ -11,10 +11,12 @@ python-socketio==5.10.0
 aiohttp==3.9.1
 websockets==12.0
 
-# ====== AUDIO PROCESSING - SIN PyAudio ======
+# ====== AUDIO PROCESSING - USANDO ALTERNATIVAS ======
 SpeechRecognition==3.10.0
 pydub==0.25.1
-# PyAudio==0.2.14  # ¡ELIMINADO! No funciona en Render
+# PyAudio ELIMINADO - usar sounddevice en su lugar
+sounddevice==0.4.6
+soundfile==0.12.1
 
 # ====== TEXT-TO-SPEECH ======
 pyttsx3==2.90
