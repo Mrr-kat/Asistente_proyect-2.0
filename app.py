@@ -17,6 +17,22 @@ from servicios.historial_service import HistorialService
 from servicios.auth_service import AuthService
 from funciones.comandos import ejecutar_comando
 
+
+# Al inicio de app.py (después de los imports)
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv("key/key.env")  # Ruta relativa
+
+# Verificar que las variables estén cargadas
+if not os.getenv("CORRE_USU") or not os.getenv("CORREO_CON"):
+    print("⚠️  Advertencia: Variables de correo no configuradas")
+    print("   Usa: CORREO_USU=tu_email@gmail.com")
+    print("   Usa: CORREO_CON=contraseña_app_16_caracteres")
+else:
+    print("✅ Variables de correo configuradas")
+
+
 # ====== DETECCIÓN DE ENTORNO ======
 IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true'
 
