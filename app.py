@@ -668,6 +668,10 @@ def liberar_recursos():
     print("Recursos liberados. Saliendo del programa...")
 
 # Main
+# app.py (antes M.0.1.py)
+# Cambia esta línea al FINAL del archivo:
 if __name__ == "__main__":
+    threading.Thread(target=escucha_pasiva, daemon=True).start()
+    import uvicorn
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app_mount, host="0.0.0.0", port=port)
