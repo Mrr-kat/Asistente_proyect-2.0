@@ -19,6 +19,113 @@ from servicios.auth_service import AuthService
 from funciones.comandos import ejecutar_comando
 
 
+
+# ====== CONFIGURACIÓN PARA RENDER ======
+import os
+import sys
+import platform
+
+# Detectar si estamos en Render
+IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true' or 'render' in os.getenv('HOSTNAME', '')
+
+def setup_audio_for_render():
+    """Configurar audio para entorno Render"""
+    print(f"Sistema operativo: {platform.system()}")
+    print(f"En Render: {IS_RENDER}")
+    
+    try:
+        if IS_RENDER:
+            print("Usando sounddevice como alternativa a PyAudio en Render...")
+            import sounddevice as sd
+            print(f"SoundDevice disponible. Dispositivos: {len(sd.query_devices())}")
+            return "sounddevice"
+        else:
+            # En desarrollo local, intentar PyAudio
+            import pyaudio
+            pa = pyaudio.PyAudio()
+            print(f"PyAudio disponible en desarrollo. Dispositivos: {pa.get_device_count()}")
+            return "pyaudio"
+    except ImportError as e:
+        print(f"Backend de audio no disponible: {e}")
+        return None
+    except Exception as e:
+        print(f"Error configurando audio: {e}")
+        return None
+
+# Inicializar backend de audio
+AUDIO_BACKEND = setup_audio_for_render()
+
+# ====== CONFIGURACIÓN DE PORCUPINE (MODIFICADA) ======
+def setup_porcupine():
+    """Configurar Porcupine según backend disponible"""
+    try:
+        access_key = "jvi0VvjYVgQMIa+C6UMiC7avc6uWoWPP2guR6F6QQyceIU5bT/s7fQ=="
+        
+        if AUDIO_BACKEND == "sounddevice":
+            # Configuración para sounddevice
+            import sounddevice as sd
+            import numpy as np
+            
+            print("Porcupine configurado con sounddevice")
+            
+            class SoundDeviceStream:
+                def __init__(self, sample_rate=16000, frame_length=512):
+                    self.sample_rate = sample_rate
+                    self.frame_length = frame_length
+                    self.stream = sd.InputStream(
+                        samplerate=sample_rate,
+                        channels=1,
+                        dtype='int16',
+                        blocksize=frame_length
+                    )
+                    self.stream.start()
+                
+                def read(self, frame_length, exception_on_overflow=False):
+                    data, _ = self.stream.read(frame_length)
+                    return data.flatten().tobytes()
+                
+                def close(self):
+                    self.stream.stop()
+                    self.stream.close()
+            
+            porcupine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
+            audio_stream = SoundDeviceStream(
+                sample_rate=porcupine.sample_rate,
+                frame_length=porcupine.frame_length
+            )
+            return porcupine, audio_stream
+            
+        elif AUDIO_BACKEND == "pyaudio":
+            # Configuración original con PyAudio
+            import pyaudio
+            import pvporcupine
+            import struct
+            
+            porcupine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
+            pa = pyaudio.PyAudio()
+            audio_stream = pa.open(
+                rate=porcupine.sample_rate,
+                channels=1,
+                format=pyaudio.paInt16,
+                input=True,
+                frames_per_buffer=porcupine.frame_length
+            )
+            return porcupine, audio_stream
+            
+        else:
+            print("⚠️  Backend de audio no disponible. Desactivando reconocimiento por voz.")
+            return None, None
+            
+    except Exception as e:
+        print(f"Error configurando Porcupine: {e}")
+        return None, None
+
+# Inicializar Porcupine
+porcupine, audio_stream = setup_porcupine()
+
+
+
+
 # Configuración de FastAPI
 app = FastAPI()
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
