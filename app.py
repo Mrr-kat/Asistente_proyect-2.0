@@ -1,6 +1,6 @@
 import os
 import pvporcupine
-import pyaudio
+"""import pyaudio"""
 import struct
 import threading
 import asyncio
@@ -24,6 +24,31 @@ from funciones.comandos import ejecutar_comando
 import os
 import sys
 import platform
+
+try:
+    import pyaudio
+except ImportError:
+    pyaudio = None
+    print("PyAudio no disponible - continuando sin audio")
+
+# app.py - MODIFICA EL INICIO
+
+# Desactivar PyAudio en Render
+SKIP_PYAUDIO = os.getenv('SKIP_PYAUDIO', 'true').lower() == 'true'
+
+# IMPORTAR PyAudio solo si NO estamos en Render
+pyaudio = None
+pvporcupine = None
+
+if not SKIP_PYAUDIO:
+    try:
+        import pyaudio
+        import pvporcupine
+        print("PyAudio y Porcupine cargados (modo desarrollo)")
+    except ImportError:
+        print("PyAudio no disponible - modo web solo")
+else:
+    print("Modo Render: PyAudio desactivado")
 
 # Detectar si estamos en Render
 IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true' or 'render' in os.getenv('HOSTNAME', '')
@@ -582,7 +607,7 @@ async def generar_reporte_pdf(request: Request, db: Session = Depends(get_db)):
 #///////////////////
 
 app_mount = socketio.ASGIApp(sio, app)
-
+"""
 # Configuración de Porcupine
 access_key = "jvi0VvjYVgQMIa+C6UMiC7avc6uWoWPP2guR6F6QQyceIU5bT/s7fQ=="
 porcupine = pvporcupine.create(access_key=access_key, keywords=["alexa"])
@@ -596,7 +621,7 @@ audio_stream = pa.open(
     input=True,
     frames_per_buffer=porcupine.frame_length
 )
-
+"""
 grabando = False
 detener = False
 
@@ -617,14 +642,13 @@ async def detener_grabacion(sid, data=None):
 
 # Escucha pasiva de palabra clave
 def escucha_pasiva():
-    """Escucha pasiva de palabra clave - versión adaptada para Render"""
+    """Escucha pasiva - desactivada en Render"""
     global grabando, detener
     
-    if not porcupine or not audio_stream:
-        print("⚠️  Reconocimiento por voz desactivado. Modo solo web activo.")
-        return
-    
-    print("Escuchando palabra clave 'alexa'...")
+    if porcupine is None or audio_stream is None:
+        print("⚠️  Reconocimiento por voz desactivado en Render")
+        print("✅ Modo web funcionando correctamente")
+        return  # Salir temprano
     
     try:
         while not detener:
