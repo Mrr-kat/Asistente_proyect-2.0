@@ -1,18 +1,8 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
+# .gitignore - Añade estos archivos
 .env
-*.sqlite3
-*.db
-static/temp/*
-static/reportes/*
-.DS_Store
-*.log
-asistente_virtual.db
-key/
+*.pyc
 __pycache__/
+instance/
+*.db
+*.sqlite
+*.pem
